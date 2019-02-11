@@ -1,9 +1,9 @@
 ﻿. "$PSScriptRoot\common.ps1"
 
-$Logfile = $logDirectory + "uwfMainScript.log"
+$LogFile = $logDirectory + "uwfMainScript.log"
 $uwfExe = "$($env:SystemDrive)\Windows\system32\uwfmgr.exe"
-$configFile = $configDirecotry + "uwfMaintenence.ini"
-$systemFile = $configDirecotry + "systemSettings.ini"
+$configFile = $configDirectory + "uwfMaintenence.ini"
+$systemFile = $configDirectory + "systemSettings.ini"
 $COMPUTER = "localhost"
 $NAMESPACE = "root\standardcimv2\embedded"
 $rtn = ""
@@ -29,39 +29,69 @@ try{
         }
         if($addLogs)
         {  
-            LogWrite $Logfile "Adding log directory exclusion"
+            LogWrite $LogFile "Adding log directory exclusion"
             $command = "$uwfExe file add-exclusion $($env:ProgramData)\Logs"
             $out = iex $command
         }
         if($addConfig)
         {  
-            LogWrite $Logfile "Adding config directory exclusion"
+            LogWrite $LogFile "Adding config directory exclusion"
             $command = "$uwfExe file add-exclusion $($env:ProgramData)\Config"
             $out = iex $command
         }
         if($addWinNetXMS)
         {  
-            LogWrite $Logfile "Adding netxms systemprofile directory exclusion"
+            LogWrite $LogFile "Adding netxms systemprofile directory exclusion"
             $command = "$uwfExe file add-exclusion $($env:SystemDrive)\Windows\System32\config\systemprofile\AppData\Local\nxagentd"
             $out = iex $command
         }
         if($addFog)
         {  
-            LogWrite $Logfile "Adding fog directory exclusion"
+            LogWrite $LogFile "Adding fog directory exclusion"
             $command = "$uwfExe file add-exclusion `"$(${env:ProgramFiles(x86)})\Fog`""
             $out = iex $command
         }
         try{
-            if(!Test-Path $systemFile){
+            if((Test-Path $systemFile)){
                 $iniSystemFile = Get-IniFile $systemFile
-                $min = $iniSystemFile.Maintenance.StartTime
-                $max = $iniSystemFile.Maintenance.StopTime
+                $min = Get-Date $iniSystemFile.Maintenance.StartTime
+                $max = Get-Date $iniSystemFile.Maintenance.StopTime
             }
         } catch {
             $min = Get-Date "22:00"
             $max = Get-Date "05:00"
         }
-
+        try{
+            if((Test-Path $systemFile)){
+                $iniSystemFile = Get-IniFile $systemFile
+                $command = "$uwfExe get-config"
+                $outConfig = iex $command
+                $strMatch = UWF-CheckSettings "type:" $outConfig
+                if(!($($($iniSystemFile.UWF.OverlayType).ToLower()) -match $($strMatch.ToLower()))) {
+                    $command = "$uwfExe overlay set-type $($iniSystemFile.UWF.OverlayType)"
+                    $out = iex $command
+                }
+                $strMatch = UWF-CheckSettings "maximum size:" $outConfig
+                if(!($($($iniSystemFile.UWF.OverlaySize).ToLower()) -match $($strMatch.ToLower()))) {
+                    $command = "$uwfExe overlay set-size $($iniSystemFile.UWF.OverlaySize)"
+                    $out = iex $command
+                }
+                $strMatch = UWF-CheckSettings "critical threshold:" $outConfig
+                if(!($($($iniSystemFile.UWF.OverlayCritical).ToLower()) -match $($strMatch.ToLower()))) {
+                    $command = "$uwfExe overlay set-criticalthreshold $($iniSystemFile.UWF.OverlayCritical)"
+                    $out = iex $command
+                }
+                $strMatch = UWF-CheckSettings "warning threshold:" $outConfig
+                if(!($($($iniSystemFile.UWF.OverlayWarning).ToLower()) -match $($strMatch.ToLower()))) {
+                    $command = "$uwfExe overlay set-warningthreshold $($iniSystemFile.UWF.OverlayWarning)"
+                    $out = iex $command
+                }
+            }
+        } catch {
+            $line = $_.InvocationInfo.ScriptLineNumber
+            LogWrite $LogFile "Error $_ processing comapre UWF setting at line $line"
+            Write-Host "Error $_ processing comapre UWF setting at line $line"
+        }
         $timeCurrent = (Get-Date)
         if($timeCurrent.ToString("HHmm") -ge $min.ToString("HHmm")){
             $max=$max.AddDays(1)
@@ -69,15 +99,15 @@ try{
             $min = $min.AddDays(-1)
         }
         Write-Host "UWF.Maintenence.Window=$min to $max`r"
-        LogWrite $Logfile "Maintenance period from $min to $max"
+        LogWrite $LogFile "Maintenance period from $min to $max"
         $rtn = $rtn +  "$logDateTime Maintenance period from $min to $max"
         if(Test-Path $configFile){
-            LogWrite $Logfile "Reading config file $configFile"
+            LogWrite $LogFile "Reading config file $configFile"
             $iniFile = Get-IniFile $configFile
             $autoMaintenance = [bool]$iniFile.Working.autoMaint
             $adminOverride = [bool]$iniFile.Global.adminOverride
         } else {
-            LogWrite $Logfile "$configFile Config file does not exist"
+            LogWrite $LogFile "$configFile Config file does not exist"
             $rtn = $rtn + " - Could not read config file - $configFile"
             $autoMaintenance = $false
         }
@@ -87,14 +117,14 @@ try{
                 if($($objUWFInstance.CurrentEnabled)){
                     $command = "$uwfExe filter disable"
                     $outTemp = iex $command
-                    LogWrite $Logfile "Entering Maintenance window"
+                    LogWrite $LogFile "Entering Maintenance window"
                     Write-Host "UWF.Maintenence.CurrentState=Entering Maintenance window`r"
                     $rtn = $rtn + " - Entering Maintenance window"
                     $iniFile.Working.autoMaint = "true"
                     $reboot = $true
                 } else {
                     Write-Host "UWF.Maintenence.CurrentState=In Maintenance window`r"
-                    LogWrite $Logfile "In Maintenance window"
+                    LogWrite $LogFile "In Maintenance window"
                     $rtn = $rtn + " - In Maintenance window"
                 }
             } else {
@@ -106,7 +136,7 @@ try{
                         $rtn = $rtn + " - Exiting Maintenance window"
                         $reboot = $true
                 } else {
-                    LogWrite "Disgarding changes"
+                    LogWrite $Logfile "Disgarding changes"
                     Write-Host "UWF.Maintenence.CurrentState=Disgarding changes`r"
                     $rtn = $rtn + " - Disgarding changes"
                 }
@@ -116,13 +146,13 @@ try{
             if($($objUWFInstance.CurrentEnabled)){
                 $command = "$uwfExe filter disable"
                 $outTemp = iex $command
-                LogWrite $Logfile "Entering Admin Maintenance"
+                LogWrite $LogFile "Entering Admin Maintenance"
                 Write-Host "UWF.Maintenence.CurrentState=Entering Admin Maintenance`r"
                 $rtn = $rtn + " - Entering Admin Maintenance"
                 $reboot = $true
             } else {
                 Write-Host "UWF.Maintenence.CurrentState=In Admin Maintenance`r"
-                LogWrite $Logfile "In Admin Maintenance"
+                LogWrite $LogFile "In Admin Maintenance"
                 $rtn = $rtn + " - In Admin Maintenance"
             }
         }
@@ -138,7 +168,7 @@ try{
     }
 } catch {
     $line = $_.InvocationInfo.ScriptLineNumber
-    LogWrite $Logfile "Error $_ processing ini file at line $line"
+    LogWrite $LogFile "Error $_ processing ini file at line $line"
     Write-Host "UWF.Maintenence.LogDetails=$logDateTime - Error $_ in line $line `r"
 }
 
@@ -146,8 +176,8 @@ try{
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUPe8g+z8qbWZOg+eS9c456jO3
-# Fd2gggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUY7x0rON61cSRWdGioniawSFI
+# 7vKgggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -187,11 +217,11 @@ try{
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBSgLQSURH1gWYj0wNSV/kIXtTbnEDANBgkqhkiG9w0BAQEFAASCAQCF
-# 1gfRvTAnKtrjLMkq7+XL7W8eF3/V5ppenxFD3qVq0eyMK1xehLpxOrNd84J70JKH
-# Q1sC3t/3F8EGyX4ya/pXyZyR0F7QdK9406TWhbOvhF2cHDzFN10KzsmRw5YtjvTX
-# vvC/q98sv7gPT06uI5lfQveFEqFrSZp4rc3Ki5efX5FgZlUCH/ufnSC7N/v94wiD
-# PJNQ+qa39xlWzTOvy66KJKvrS1PzTcIUtv0O6MrhuP0knM2VaB/ZfarcWhu1UQsf
-# 9ghQizLUNx1h303H3KJIK0S9uMxiWw4PtTIAmKZu8pORlpvohW8HJgmBi2j91Kts
-# nJMUBtppTI+N0f70d6oi
+# DQEJBDEWBBTtIKxxR12xu180yuS5O0Xh7CyI5zANBgkqhkiG9w0BAQEFAASCAQAj
+# T49frbGlaU5Fmi/NAiKOvzD++Uz43MSHKKCZvLdoz+KlWi7Ap3Nb7HZqf1mUsHT0
+# CClkiTDPHEoh0wfCfGvOCS05cVfAsV1iUpcLOk9OWuuVU1cW9WIrMFKItF/sxmTO
+# bJ7DWxwBuXSDcTKZuKBSA6VXLhgF9Ol6qm30hTEuqoajr0e5PCJW4PHMbY2Jf1s1
+# 6B1X7R6w61bJJlY1m8XMsBH0EtzAsnRy4EU+qSI6G2S44k6pS9KS1CfEijX1TzFg
+# V4+/29jVB0VpNoXw9y3yirqgjdSe92TNp//OYyeexi0J7lpFAWVtg2d+AJs0Eu/k
+# hZk9hCZG8SI9qfTn/SGl
 # SIG # End signature block

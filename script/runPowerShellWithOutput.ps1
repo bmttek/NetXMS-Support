@@ -1,66 +1,54 @@
 ﻿. "$PSScriptRoot\common.ps1"
 
-
-$Logfile = $logDirectory + "featureEnableDisable.log"
-
-$reboot = $false
-if(!(Test-Path $logDirecotry)){
-    New-Item $logDirecotry -ItemType Directory
+$LogFile = $logDirectory + "runPowershellSCRIPT.log"
+$reboot="false"
+try{
+    $command = "powershell ";
+    foreach($str in $args){
+        if ($str -match "^\d+$"){
+            $command = $command + " $str"
+        } elseif($str.length -gt 1){
+            if($str.ToLower() -match "reboot=yes"){
+                $reboot="true"
+            } elseif(($str -match "%%")){
+                $spl = @($str.Split("%%"))
+                $env1 = [Environment]::GetEnvironmentVariable($($spl[1]))
+                $str = $str.Replace("%%$($spl[1])%%",$env1)
+                $command = $command + " $str"
+            } elseif(!($str -match "none")){
+                if(($str -match "%")){
+                    $str = $str.Replace("%","")
+                }
+                $command = $command + " $str"
+            }
+        }
+    }
+    LogWrite $LogFile "Running command-$command"
+    $out = iex $command
+    ForEach ($str in $out){
+        if($str.length -gt 3){
+            $str = $str -replace "`0", "" 
+            $output = $output + "$str" + "`r`n"
+        }
+    }
+    #$output = $output.Trim()
+    Write-Host "$output"
+    if($reboot -eq "true"){
+        $command = "shutdown -r -t 5"
+        iex $command
+    }
 }
-try {
-    $output="Arguments Passed = $args`n"
-    LogWrite $Logfile "Arguments Passed = $args"
-     if($args.length -gt 1){
-        if($args[0].ToLower() -match "on"){
-            $command = "Dism /online /Enable-Feature /FeatureName:$($args[1]) /All /NoRestart"
-            $out = iex $command
-        } elseif($args[0].ToLower() -match "off")  {
-            $command = "Dism /online /Disable-Feature /FeatureName:$($args[1]) /NoRestart"
-            $out = iex $command
-        } else {
-            LogWrite $Logfile "2nd argumaent invalid"
-            Write-Host "$logDateTime 2nd argumaent invalid`n"
-        }
-        if($args.length -gt 2){
-            if($args[2].ToLower() -match "reboot=yes"){
-                $reboot = $true
-            }
-        }
-        ForEach ($str in $out){
-            if($str.length -gt 3){
-                $str = $str -replace "`0", "" 
-                $output = $output + "$str" + "`n"
-            }
-        }
-        $command = "Dism /online /Get-FeatureInfo /FeatureName:$($args[1])"
-        $out = iex $command
-        ForEach ($str in $out){
-            if($str.length -gt 3){
-                $str = $str -replace "`0", "" 
-                $output = $output + "$str" + "`n"
-            }
-        }
-        Write-Host $output
-
-        if($reboot){
-            $command = "shutdown -r -t 10"
-            iex $command
-        }
-     } else {
-        LogWrite $Logfile "Not enough argumanets 1st ON/OFF 2nd feature name"
-        Write-Host "$logDateTime Not enough argumanets 1st ON/OFF 2nd feature name `n`r"
-     }
-} catch {
+catch {
     $line = $_.InvocationInfo.ScriptLineNumber
-    LogWrite $Logfile "Error $_ processing ini file at line $line"
-    Write-Host "$logDateTime - Error $_ in line $line`n"
-} 
+    Write-Host "Error $_ processing ini file at line $line"
+    LogWrite $LogFile "Error $_ processing ini file at line $line"
+}
 
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUOpTj7EdOqr4EBkx+qaBRGqib
-# RLmgggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUkKHsLfpz89ijshxw19jaftYL
+# eRmgggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -100,11 +88,11 @@ try {
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBS+XGfO0qNdx5ezAwFyrmUmtlXe3TANBgkqhkiG9w0BAQEFAASCAQCp
-# pdplh+G8rLZDF4GId4lxD469teaOy1ABHKL3NWy9jWoeFjqh6T/k9CLJEMP3lx9F
-# 4b9Shf8iyU2vfHP9RsYGTnOyfg1r8V+daSjNdmA9ZSHZswDoTPpkA5MCeWXy6dA8
-# bi4BB1TVG6mD5HvFj+MUa6oDBa1Xx+6pOIOmiSRlI9XQyNnbiuq7RKsiAduT5LKO
-# KmySjoIPBVh1qk76lURo4SKzggXCQzfoXH4hXrpM3ivz8RmSVtuu252rW201rx+M
-# D508Rhm9Yar3w8bNyi6+9vu0olHSQdgdB3AFItGmXKU7kOW42R6nFjEQPzZwVhMR
-# FKr5A/zic568eezFbt1T
+# DQEJBDEWBBQnb0SZN7+c+YKdO1iSiIktkrjMADANBgkqhkiG9w0BAQEFAASCAQCh
+# xF4GLV7xxj7CQEZCYg3gGvY906itI4z2hzK2dB8F2AI8omi2YD6KQL7EGG4g+TQT
+# XGMwrIXuH2tPVndnFAV0wq2K8bxXovlu/dP3v8wGAaGQd/vqjhGV8t017NiSbIg7
+# k0rqrg7rUxF+43o8Palnz1L8DDJoBGQsbfU2CuRaoCXeRn5KxE/b7RtZQ75tRZe6
+# ChLWay7EIR2p6LwdqzEcVtqJS+2h7Zdde5eZuNDKNArgUHUt4fter9jkC1/BhXLb
+# sN6jAw6/ju9awCuZMXOiQDoc3SlAEFlkHvoe0FgVA2RqtJYNGyTuZlwAcKoLzWM4
+# j66WMc8x6vLXDLtdQmq/
 # SIG # End signature block

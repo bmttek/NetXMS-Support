@@ -1,17 +1,17 @@
 ﻿. "$PSScriptRoot\common.ps1"
 
-$Logfile = $logDirectory + "setIniFile.log"
-$configFile = $configDirecotry + "systemSetings.ini"
+$LogFile = $logDirectory + "setIniFile.log"
+$configFile = $configDirectory + "systemSettings.ini"
 $iniFilePath = ""
 $rtn = ""
 try{
     if($args.length -gt 2){
         $iniFilePath = $args[0]
         if(Test-Path $iniFilePath){
-            LogWrite $LogFile "Reading config file $iniFilePath"
             $iniFile = Get-IniFile $iniFilePath
             try {
                 $iniSetting = $iniFile.$($args[1]).$($args[2])
+                LogWrite $LogFile "Inserting group $($args[1]) setting $($args[2]) with value $($args[3]) into file $($args[0])"
                 if($iniSetting -ne $args[3]){
                     $iniFile.$($args[1]).$($args[2]) = $args[3]
                     Out-IniFile $iniFile $iniFilePath
@@ -43,8 +43,8 @@ try{
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU+oTYi9t1WQCnmS+rZSQ9c8lv
-# 3i+gggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUz1DWh041LeQy1qgRn5LAkW9p
+# HrKgggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -84,11 +84,11 @@ try{
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBQ0mONXQaqFuH/wnJMUOAS8i9psnDANBgkqhkiG9w0BAQEFAASCAQCR
-# qKQAKDSgP7V0OVnlD2GzecTqsmy9fEjjAB64DlQ74XPquNFwfKjZioAuG0md/8Qb
-# Dx3yVO9jhoTLlXKOjocX7psR5gquth7tPz0w4CXpZ/3GEpbX4YpUwbZLq5qdgdN+
-# eZEnrMLeko4VU2CVu549+tkL8vcr85Is9QnSOsOZdqaJGTs//8dmTsQF5geuw4RU
-# wbQLvX6YboTtmdo8hAagoG/KPafSD+QC+M5eZdsg41ka6in5But17wXYIsLv+BcM
-# zx7BT6BIpkOQtoaE3jhNGmQMRYPkwjdaVoJFaY9aqVnFH0Gg4VwmfQBXwpFRZr4A
-# W2b+MeLgz8V05J+Ek2s0
+# DQEJBDEWBBTwee3OJFD3XWO115Ogn35cEqxBgDANBgkqhkiG9w0BAQEFAASCAQBf
+# I7CTeQ7XdEt72ip0WdCL9Lt6uuJVzZ5U3wZRTngMTJeEBNqE2G9/You8x8y8DmsB
+# 4zRZetCvKuufmHvmcXxoCnnV+4OTjAhV6rcY+zFzXEjx77IoMXduIF3dw+nUy8JG
+# PzAZgvKxAitINHOL3NjCDMNhv/qjFR1sIFPnQpOwd6Ogepo1pX0tTHsTk+1Pp+OZ
+# qwEhmsPgEUbjMUJTQ8mLzlpd9j08AQEvemsDAWz4HLWgse4MekacDL64nYEK5v9n
+# hribEsdngLFrGdloeUEGiP1kI/8tGNO3grV0bqxsDH9OqH/X9+8/FY8NDQDeRgHo
+# EP5UkHxGX3vTgtRKzHWS
 # SIG # End signature block

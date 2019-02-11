@@ -1,48 +1,48 @@
-﻿$reboot="false"
-try{
-    $command = "powershell ";
-    foreach($str in $args){
-        if($str.length -gt 1){
-            if($str.ToLower() -match "reboot=yes"){
-                $reboot="true"
-            } elseif(($str -match "%%")){
-                $spl = @($str.Split("%%"))
-                $env1 = [Environment]::GetEnvironmentVariable($($spl[1]))
-                $str = $str.Replace("%%$($spl[1])%%",$env1)
-                $command = $command + " $str"
-            } elseif(!($str -match "none")){
-                if(($str -match "%")){
-                    $str = $str.Replace("%","")
-                }
-                $command = $command + " $str"
-            }
-        }
+﻿. "$PSScriptRoot\common.ps1"
 
-    }
-    $out = iex $command
-    ForEach ($str in $out){
-        if($str.length -gt 3){
-            $str = $str -replace "`0", "" 
-            $output = $output + "$str" + "`r`n"
+$LogFile = $logDirectory + "uwfEnableDisable.log"
+$uwfExe = "$($env:SystemDrive)\Windows\system32\uwfmgr.exe"
+$configFile = $configDirectory + "uwfMaintenence.ini"
+$COMPUTER = "localhost"
+$NAMESPACE = "root\standardcimv2\embedded"
+$rtn = ""
+
+try{
+    if($args.Length -gt 0){
+        $iniFile = Get-IniFile $configFile
+        if($($args[0]).ToString().ToLower() -like "enable"){
+            $iniFile.Global.adminOverride = ""
+            $command="$uwfExe filter enable"
+            $output = iex $command
+            Out-IniFile $iniFile $configFile
+            Write-Host "UWF Filter Enabled and removed admin override`r"
+            $command = "shutdown -r -t 5"
+            $output = iex $command
+        } elseif ($($args[0]).ToString().ToLower() -like "disable"){
+            $iniFile.Global.adminOverride = "true"
+            $command="$uwfExe filter disable"
+            $output = iex $command
+            Out-IniFile $iniFile $configFile
+            Write-Host "UWF Filter Disabled and set admin override`r"
+            $command = "shutdown -r -t 5"
+            $output = iex $command
+        } else {
+            Write-Host "Invalid argument given: $($args[0])`r"
         }
+    } else {
+        Write-Host "No arguments given`r"
     }
-    #$output = $output.Trim()
-    Write-Host "$output"
-    if($reboot -eq "true"){
-        $command = "shutdown -r -t 5"
-        iex $command
-    }
-}
-catch {
+} catch {
     $line = $_.InvocationInfo.ScriptLineNumber
-    Write-Host "Error $_ processing ini file at line $line"
+    LogWrite "Error $_ processing ini file at line $line"
+    Write-Host "Erro processing script Enable Disable - Error $_ in line $line `r"
 }
 
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUWkf69gwGdln77HRqxKILQ5l9
-# 1zegggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUPXC69jag8goGS/or0bqaeUC0
+# NDCgggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -82,11 +82,11 @@ catch {
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBSlc/O252HRuKXd6Z0SWvj8b9Ut3TANBgkqhkiG9w0BAQEFAASCAQCt
-# r6opFafP4hebXU0xFRQvIyCrSZloidQ+kp1FaRUinT+tNIwVQoSQmWeBPIPq9nbB
-# ztql5OHW1ZvKc+zo/FCi4hT4CknutFoX5GNzkWuL1HkEwmldlW95s7h87oTFol2F
-# DiRfF/AkZpANBL/07aDxcrXj0qli143aiumccCAi/5F1i2UFNUBkBy5OKbQaY8d7
-# wCPSYiPiUhwsXfDK7OX3CQFT1FAVsUMoaUJYcRxR0DE3/mjCHWk9PvPukP4tZHeC
-# /FTbEqsaF7RrREFoeZz8uy2+/hq6T8cCpFmYn8BR8GQ+VFJYucAXB12VbChmmmNy
-# DW05VxE8p/nzl8jlXRRd
+# DQEJBDEWBBRhfahVmLWN2NpOCiEuM/mGw4c97jANBgkqhkiG9w0BAQEFAASCAQAn
+# rt26r1C5amc+y+AlB0lB+NgPP2VngUOA2zV9t2x1fGdPEh+XMRyWubekgaw1WSGE
+# YS8fGn4EFMnzMmyY4GFBsCTieaHBDEWckQBBIPEjNMcK17EZzNqR3I+wyDlfdKba
+# lftt+6yhY2/a3H0v+YJvl7f3GHZg9zsXgihnCXO+mwNP3SF4bYUxlf4o1jYQKty9
+# sR4fUFsK1oyYoVExGIo3PjbhfB9BBCED14jJGwJ+9tK91mm+UOtZ+xO3WSKAJs2m
+# uylhlgso7W09kxEGN7mkM75XypHd9BGW6j1LXp0Cqe6Qj22TxaiIMDBK8i9LBOIY
+# mGfir/oqb7eZFj5NPID/
 # SIG # End signature block

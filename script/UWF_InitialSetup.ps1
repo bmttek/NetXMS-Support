@@ -273,6 +273,7 @@ if(Test-Path "$($env:ProgramData)\Config\uwfMaintenence.ini"){
 }
 Add-Content -Path "$($env:ProgramData)\Config\uwfMaintenence.ini" -Value "[Global]"
 Add-Content -Path "$($env:ProgramData)\Config\uwfMaintenence.ini" -Value "adminOverride=true"
+Add-Content -Path "$($env:ProgramData)\Config\uwfMaintenence.ini" -Value "initial=true"
 Add-Content -Path "$($env:ProgramData)\Config\uwfMaintenence.ini" -Value "[Working]"
 Add-Content -Path "$($env:ProgramData)\Config\uwfMaintenence.ini" -Value "autoMaint="
 
@@ -281,8 +282,8 @@ Write-Host "Done with initial setup script"
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUF3uOGB+ApbL+LY3ZdEpSdVJ1
-# Rl2gggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU8jJS9tjiyUZ8wibfFlNXRjQ5
+# HVigggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -322,11 +323,11 @@ Write-Host "Done with initial setup script"
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBRJ8wn4G6R4qo2mk+vMRRIGsKm+qjANBgkqhkiG9w0BAQEFAASCAQBP
-# oecsY87Z2f9pcuqbcGeLSdsLr4qz8ucCO65WbQYB6+1FBgjpMtEpK7nOVSrUEYmE
-# Zes49qlSXAiXexasrlnN83cp8um+dkRoZTfH+SU7P1VSbW/vpVaZYTVvbYQDEyWf
-# jkuJihytRyVEZYn3OxeLRpbCn/Zt9teLvMAVVm45FDGG/1TqvqQmco+0Z2fGAJj4
-# SIhIWYHNDeM9po4bQoOvSLtX8T0QHNjSbDvpYnbN4WY5NtwXw/c2Ku3spBDeR/m3
-# q2Kg5FSaNQi6zpWhGZytea5bbqO5mzliHUZJId2e72NjRF3mrpajGX3HODM2d2J4
-# 2DKyDDEV4hxPIEwtcM7Q
+# DQEJBDEWBBS3xxdRBs0S2CmdDG072mIDQuK1czANBgkqhkiG9w0BAQEFAASCAQBt
+# AxBA9ICktZsbVTHl1NhrgIHodsMpsEoukrWulAThQszq7FuzDsIE6Dkcq7Z0v+hG
+# WDUiPsgiqqpN0M/+ujq3biVJs5e5P59tByhiOiZEDFsPzdHfSuxHcZsi8xWEDMbZ
+# yutx9dBiESQW/mlXwikSIsLF0vNZk4n8kyRdxZmkAn6c1LpPTfwvgBFWOyh7Or2k
+# 4m5uDXdwkNlStMp4/iTIQFOSuRw9l5c0xOCQ+rjDsZMj4pZCAysVj3AQqpZGMazp
+# DgbIK+AKd6mN/wEIlYRLZ8anoUBP68NS8Mm62R7h90pMq/l+9gqAqOW4KpBPCawZ
+# VBD4IKU+3WKTsvXrW6yf
 # SIG # End signature block

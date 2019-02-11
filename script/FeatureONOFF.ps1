@@ -1,76 +1,63 @@
 ﻿. "$PSScriptRoot\common.ps1"
 
-$Logfile = $logDirectory + "updateScript.log"
-$configFile = $configDirecotry + "systemSettings.ini"
-$runUpdate = $false
-try{
-    Write-Host "Agent.UpdateScripts.LastReported=$logDateTime`r"
-    try{
-        if(Test-Path $configFile){
-            $iniFile = Get-IniFile $configFile
-            $sourcePath = "\\$($iniFile.Global.Domain)\sysvol\$($iniFile.Global.Domain)\scripts\NetXMS\"
-            $runUpdate = $true
+
+$LogFile = $logDirectory + "featureEnableDisable.log"
+
+$reboot = $false
+try {
+    $output="Arguments Passed = $args`n"
+    LogWrite $LogFile "Arguments Passed = $args"
+     if($args.length -gt 1){
+        if($args[0].ToLower() -match "on"){
+            $command = "Dism /online /Enable-Feature /FeatureName:$($args[1]) /All /NoRestart"
+            $out = iex $command
+        } elseif($args[0].ToLower() -match "off")  {
+            $command = "Dism /online /Disable-Feature /FeatureName:$($args[1]) /NoRestart"
+            $out = iex $command
         } else {
-            if($args.Length -ge 1){
-                $runUpdate = $true
-                $sourcePath = $args[0]
+            LogWrite $LogFile "2nd argumaent invalid"
+            Write-Host "$logDateTime 2nd argumaent invalid`n"
+        }
+        if($args.length -gt 2){
+            if($args[2].ToLower() -match "reboot=yes"){
+                $reboot = $true
             }
         }
-    } catch {
-        if($args.Length -ge 1){
-            $runUpdate = $true
-            $sourcePath = $args[0]
+        ForEach ($str in $out){
+            if($str.length -gt 3){
+                $str = $str -replace "`0", "" 
+                $output = $output + "$str" + "`n"
+            }
         }
-    }
-    if($runUpdate){
-        $destPath = $PSScriptRoot
-        $sourcePath = $sourcePath.Replace("\\\","\\")
-        $sourceFiles = Get-ChildItem($sourcePath)
-        foreach($item in $sourceFiles)
-        {
-            if($item){
-                $copy = "false"
-                if(!($item.PSIsContainer)){
-                    if(Test-Path "$($destPath)\$($item)"){
-                        try{
-                            $diff = compare-object -ReferenceObject $(get-content $($item.FullName)) -DifferenceObject $(get-content "$($destPath)\$($item)")
-                            if($($diff.Length) -gt 0) {
-                                $copy = "true"
-                            }
-                        } catch {
-                            Remove-Item "$($destPath)\$($item)"
-                            $copy = "true"
-                        }    
-                    } else {
-                        $copy = "true"
-                    }
-                }
-                if($copy -eq "true"){
-                    Copy-Item $($item.FullName) "$($destPath)\$($item)"
-                    #LogWrite "copied $item to $($destPath)"
-                }
-            } 
+        $command = "Dism /online /Get-FeatureInfo /FeatureName:$($args[1])"
+        $out = iex $command
+        ForEach ($str in $out){
+            if($str.length -gt 3){
+                $str = $str -replace "`0", "" 
+                $output = $output + "$str" + "`n"
+            }
         }
-        Write-Host "Agent.UpdateScripts.Status=OK`r"
-        Write-Host "Agent.UpdateScripts.LogDetails=""`r"
-    }
-    else{
-        LogWrite $Logfile "No argument for location given"
-        Write-Host "Agent.UpdateScripts.Status=No Source path argument or domain set in system settings"
+        Write-Host $output
 
-    }
+        if($reboot){
+            $command = "shutdown -r -t 10"
+            iex $command
+        }
+     } else {
+        LogWrite $LogFile "Not enough argumanets 1st ON/OFF 2nd feature name"
+        Write-Host "$logDateTime Not enough argumanets 1st ON/OFF 2nd feature name `n`r"
+     }
 } catch {
     $line = $_.InvocationInfo.ScriptLineNumber
-    LogWrite $Logfile "Error $_ processing ini file at line $line"
-    Write-Host "Agent.UpdateScripts.Status=Error`r"
-    Write-Host "Agent.UpdateScripts.LogDetails=Error $_ in line $line `r`n"
+    LogWrite $LogFile "Error $_ processing ini file at line $line"
+    Write-Host "$logDateTime - Error $_ in line $line`n"
 } 
 
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQULxXom1X+W/+UH/9+BBQlkk2N
-# IICgggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUx07/O8NGdNOO0UPPCNcU13Kh
+# mVSgggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -110,11 +97,11 @@ try{
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBSK9Uhp1e955eZiCsynbPeruq5vAjANBgkqhkiG9w0BAQEFAASCAQCA
-# jgerssovBQRDD9Dkzj8Fivqjc2QJLTDtn+1wLUDY2JMv3hDA3pmsxH1FxI5+yReD
-# 9zN7m065+rL79v6mrP8Xwi1w2fZDeWoyRu3vEmGEC9g10o9MsABkn2W0tZqnGfsk
-# i1mdDPzGACjaoKDuCbTgvt+QxLYPngXYAYhKNpdAyp9E9UVEmSrCga+c4r1rhlfS
-# vCCPzkWg6RmRU/BCwAv9d7/kEG44RJ/3GMadMmh/zASEycdHbcy1MsFrt7SikARc
-# GdTHWkHu3X6E01ehV/2pPicR7r5iW5pyfu44+wKmMUWi5d2HYXeYaNG0U8scdwaF
-# w7I7amvjo3W/urkWR/0b
+# DQEJBDEWBBSIsflhf1VQV8pQWGFyA+xhDP33LDANBgkqhkiG9w0BAQEFAASCAQBP
+# 1xA9q61Q5KPtLAIx+6+tZ1m7q3MoDCzsMgbWqRzTS099Bz6xBQK5w2MvizF/DoIH
+# 1oscK90Fp+wFwY1N8D/URCcvGoh7NcrENo0KOC/Ga/xkGnU2d7HqyEgygRecQ8K+
+# lC7p1yh31C0kFWT8PPQZjQD9XxXYvgTCC7AlyWAHG7ZwbuPHP8NhhwTue0VChGRv
+# hGjXPaxH0N0k14Gy5hMOA+K/AFwM+B0I7r3ufrsnmZ1wtDx55Dl68iFulb6Dgv0f
+# CuKLDSp5B7HRJ76f2BB95eGtYEWVM2Edu7uqiUFXBHKW46fFPjrMNWOCLzLVY7IF
+# /VRdSU+oE1eQ4yTy6lte
 # SIG # End signature block

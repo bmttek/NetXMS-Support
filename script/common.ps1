@@ -3,6 +3,14 @@
         $tempTime = [DateTime]::Now.ToString("yyyyMMddHHmmss")
         Add-content $logFileNow -value "$tempTime - $logstring"
 }
+function checkArgumentExists($arguments, $str){
+    foreach ($inStr in $arguments){
+        if($inStr.ToLower() -eq $str.ToLower()){
+            return $true
+        }
+    }
+    return $false
+}
 function Out-IniFile($InputObject, $FilePath)
 {
     if(Test-Path $FilePath){
@@ -100,26 +108,46 @@ function Get-IniFile
 
     return $ini  
 }  
+function UWF-CheckSettings($strQ, $out)
+{
+    $outputConfig = ""
+    ForEach ($str in $out){
+        if($str.length -gt 1){
+            $str = $str -replace "`0", "" 
+            $outputConfig = $outputConfig + "$str" + "`r`n"
+        }
+    }
+    $outputParts = $outputConfig -Split "Next Session Settings"
+    $nextSessionSettings = $($outputParts[1]) -split "`r`n"
+    $currentSessionSettings = $($outputParts[0]) -split "`r`n"
+    ForEach ($strCurrent in $currentSessionSettings){
+        if($strCurrent.ToLower() -match $strQ){
+            return $($($($($strCurrent -split ":")[1]).Trim()).Replace(' MB',''))
+        } 
+    }
+    return "none"
+}
 
 $logDateTime = [DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss")
-$logDirecotry = "$($env:ProgramData)\Logs\"
-$configDirecotry = "$($env:ProgramData)\Config\"
-$Logfile = $logDirectory + "common.log"
-$configFile = $configDirecotry + "systemSetings.ini"
+$logDirectory = "$($env:ProgramData)\Logs\"
+$configDirectory = "$($env:ProgramData)\Config\"
+$LogFile = $logDirectory + "common.log"
+$configFile = $configDirectory + "systemSetings.ini"
 $logFileDateTime = [DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss")
 
-if(!(Test-Path $logDirecotry)){
-    New-Item $logDirecotry -ItemType Directory
+
+if(!(Test-Path $logDirectory)){
+    New-Item $logDirectory -ItemType Directory
 }
-if(!(Test-Path $configDirecotry)){
-    New-Item $configDirecotry -ItemType Directory
+if(!(Test-Path $configDirectory)){
+    New-Item $configDirectory -ItemType Directory
 }
 
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUZI9sreBZg0wXKjMRTdc5zqrP
-# GsegggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUzwr/oLKwb9rZWNdkE7Q2G68a
+# OF+gggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -159,11 +187,11 @@ if(!(Test-Path $configDirecotry)){
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBQ6APO6QHkubEXBl5NPJr7+RBE98zANBgkqhkiG9w0BAQEFAASCAQCL
-# H2+gBcoNsQuqHBReYM6xu4EHmDzeQM1+iZZt9LArxgoTIVMBImCRrOFiGBp+Rhpb
-# oi41gmoRxCRrOWnpdmshPGsEHB6aHWFIvUzpXSauzF3UZhJmL6xiK4CwO2t9XArZ
-# URFXhMHRrOaWXzzQ4xi47cM+GoVeUSJd/dqFhuauIDV48ohUeQc8JzkWwE65qce5
-# G9oNCIu10iLoDPZNNIAe9O8maShYIef+jjloYR7X+60KODB5mu5LHuKVnCQBffgr
-# jA5huDxzADh09w0JhbepEvtTUpRH/SWNSIfoHN/KQivw/82nv2+0E4Ccx3Ua/WbH
-# zqwtIYg0GnI9ElCFTgYY
+# DQEJBDEWBBSMkFCBYbRCUyg/SuGJhnCrtQEbKzANBgkqhkiG9w0BAQEFAASCAQCm
+# supQng+1UzLHlFoTH9PBoOAlbmhw7LvlCOkj+5q4BGLcg0tlN/ZovbHfzXI2nvob
+# t34we9U+5lrFyesg9e4HIQKNd1C/ieHZCjAJmYqfFRFuzpl6ZrKynjXey6OfkMSe
+# LE/21Ht1dbjJNXBAwrEKBgzdLq2Iii54jqj6a0uZJd5SFEh5f3oG+HkmzALjbMQQ
+# L8BKgeeOd/x3qSWLWCFAAfWGJ0IWf4UqhhPHnfoW4iGOSNKNFElQ2XyXBesSDzcf
+# a2aV5rYqHGAzrWI8u5n5zlUHw+K1NWqjykfjspvZUCgiY4TtypqHUlthZdA7MQUD
+# oYqAvFGcix6+NN/bOs1h
 # SIG # End signature block

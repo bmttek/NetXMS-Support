@@ -1,6 +1,6 @@
 ﻿. "$PSScriptRoot\common.ps1"
 
-$Logfile = $logDirectory + "ExternalProvider_UWF.log"
+$LogFile = $logDirectory + "ExternalProvider_UWF.log"
 $uwfExe = "$($env:SystemDrive)\Windows\system32\uwfmgr.exe"
 
 try {
@@ -63,15 +63,15 @@ try {
     }
 } catch {
     $line = $_.InvocationInfo.ScriptLineNumber
-    LogWrite $Logfile "Error $_ processing ini file at line $line"
+    LogWrite $LogFile "Error $_ processing ini file at line $line"
     Write-Host "$logDateTime - Error $_ in line $line `r`n"
 } 
 
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUbiU8CXQcvQ8UFQCuCGI0xJib
-# ycqgggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUO5/OUgQ/0+CqL7XU4ijpLa8H
+# iHagggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -111,11 +111,11 @@ try {
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBRAOVCdtA62S4ORStgsXkNFEbcoXjANBgkqhkiG9w0BAQEFAASCAQC3
-# Q9dYeuzvuWPQ97Z9oyi02BiKOICeYWfQeAngpimCpL+NOohw8UONtUndqjQBJopl
-# /YV5u2kuJ5mHqP1pq4QQuTRlF8PxY7AcoLXdZP+X3hpsfER6aMnRlBmOHi/mmecC
-# 0fxk9I7Mi5XLCWxl/6Y26dDww3w5gu8sdKyVVB9pMxmzIth7v3rvoWPrgTdNw2Wx
-# ktGw/6uqVnbC6OyGheGCFcOLN9VQNQ2qRXWC2qTdMOxvmmmmtkczdfVCECMlW69M
-# 2TWtwN6IPB1yzQy+kOgm6Y3GmQlJnIFkEg88K7XZYIZlJdmOZt+7IQGDXs8l/CdL
-# dqvaw7zDgIo/SyaaSPWV
+# DQEJBDEWBBRW50a2+O1qyvye5YLlqWON9xY5/jANBgkqhkiG9w0BAQEFAASCAQCL
+# UL71uiQczBs/+7yA/atP/5xQ0Rfn5JtyyJLvFQMSeUAuQRHLcPvRkyAQcKaSbfdW
+# 0Oj3Oux7V2iJXKAfNYuKKQQ3QEE3jbKiBk9rEL6HuBRY6bScgMfvcGb+cpVYUQYy
+# NXlj9YMrNBusnywiqx8k0RetKWGH4lWrXcQ8BV71kRGgVUZ/rptIWaukDYFcx9xZ
+# bc3dVa9MWgn5aXcnk5cOQgBW3SsjpN2vDAQd76Ia0RFXc+PiWLNo2Bj9Z7zMuMW0
+# ORzs0xLpNISCrsv9HSiS/gIPPaFAmpyH8Gmxf9f0ZPjly+h6GrpZIXWtWmeRCm7F
+# 5LgyW54LcE9gy8JRycdo
 # SIG # End signature block

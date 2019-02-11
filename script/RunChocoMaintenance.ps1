@@ -8,21 +8,21 @@ if(Test-Path "$env:ProgramData\chocolatey\applist\checkAPPS.ini"){
 }
 $chocoEXE = "$env:ProgramData\chocolatey\bin\choco.exe"
 $abcUpdateEXE = "$env:ProgramData\chocolatey\lib\ABC-Update\tools\ABC-Update.exe"
-$Logfile = $logDirectory + "maintChoco.log"
-$configFile = $configDirecotry + "systemSettings.ini"
+$LogFile = $logDirectory + "maintChoco.log"
+$configFile = $configDirectory + "systemSettings.ini"
 $proxy = ""
 $debug = $false
 $run = $false
 
 Write-Host "System.Maintenance.LastReported=$logDateTime"
-if($args.Length -ge 1){
-    if($args -match "debug"){
-        $debug=$true
-    } elseif($args -match "now") {
-        Write-Host "Entering admin override`n"
-        LogWrite $LogFile "Entering admin override"
-        $run = $true
-    }
+
+
+if(checkArgumentExists $args "debug"){ $debug=$true }
+if(checkArgumentExists $args "now")
+{ 
+    Write-Host "Entering admin override`n"
+    LogWrite $LogFile "Entering admin override"
+    $run = $true
 }
 
 try{
@@ -259,15 +259,15 @@ try{
     }
 } catch {
     $line = $_.InvocationInfo.ScriptLineNumber
-    LogWrite $Logfile "Error $_ processing ini file at line $line"
+    LogWrite $LogFile "Error $_ processing ini file at line $line"
     Write-Host "System.Maintenance.Log=$logDateTime - Error $_ in line $line"
 }
 
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUNE1hz0U1bzxeKO9drGet8mCk
-# ZhegggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUBqPhJZDc/Do8Mo/p9GjsXaib
+# SAagggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -307,11 +307,11 @@ try{
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBR+DjAMGJ7ynrusdxbxlwol7y9tIDANBgkqhkiG9w0BAQEFAASCAQAh
-# ByBn4MXVfoUfWVUIFyE3LOYKOZi/KSk2kG4UTZ3UIE7MTCYJKNVT1IZ68N/WiyP0
-# Ytw7dNuF8d9AU/5PmD0JH13LpKTdaOUMxTL71m8A4vaDRQmBIxl9l50QCe9wmkcs
-# 5TyePmNCvAabzNuf2946eqQWvvjQhh7b+XTk8/Z+5hAmSGcp8kC568x1w+TU7/db
-# 0NCvSvDCIubC1+ZxXJZyEkyPJhsc70c2SDciQf4dwAAy45yJSLCUfrztQGxHR3BK
-# 1v+JrS6nCQVOFfRL8OCdWZ7EN94ZEXbYJzBIQaeidaPWi5YZQPEaXaZje6VBYGsR
-# 8qMJmxbrmJvrpw0z4lh1
+# DQEJBDEWBBQfDUU/D7aVdgvVKU03KrcMUY8r4jANBgkqhkiG9w0BAQEFAASCAQCD
+# qDIWXou+7uheKhWwHblqtXGhx8iiNoNLqY2xR/FGrQYkVtBBUeqqqTVmLf9bptiY
+# HUKxQgMD9c0ODaH7POLdIXjBLPNWXFSzuVRlIkJwIXj+aM86/cARS9N/siVuwbxP
+# z2QqLlQ8KUXChAkrYSIIU/EcfEzO/RAC7Nqyblu1JhiHLtHIpIkZ2mys04Q81xwg
+# Xf17O7PecD7pIdZERuXk8M60OrzLbO6ECefND9ur0BMX0Sqg/x17+5lw6Lo+JXuj
+# +JQGdQ7nYn8Lc3CzwwsVTxuaCv7lt1vyt2jJRif9QtRPBa0gLELZluRs/2mZqZf0
+# GC8jicU+HKK2xGfdgXWW
 # SIG # End signature block
