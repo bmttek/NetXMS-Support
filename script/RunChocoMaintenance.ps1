@@ -48,6 +48,28 @@ try{
         LogWrite $LogFile "Entering Maintenance time"
         $run = $true
     }
+    # Check netXMS agent DB file for more then 5 hours old and reset if bad
+    if(Test-Path "$($env:SystemDrive)\Windows\System32\config\systemprofile\AppData\Local\nxagentd\nxagentd.db"){
+        $lastWrite = (get-item "$($env:SystemDrive)\Windows\System32\config\systemprofile\AppData\Local\nxagentd\nxagentd.db").LastWriteTime
+        $timespan = new-timespan -days 0 -hours 5 -minutes 0
+        if (((get-date) - $lastWrite) -gt $timespan) {
+            if ($arrService.Status -eq 'Running'){
+                Stop-Service -WarningAction SilentlyContinue $ServiceName
+                Start-Sleep -seconds 20
+            }
+            Remove-Item("$($env:SystemDrive)\Windows\System32\config\systemprofile\AppData\Local\nxagentd\nxagentd.db")
+            Start-Sleep -seconds 3
+            Start-Service -WarningAction SilentlyContinue $ServiceName
+            Start-Sleep -seconds 30
+            if ($arrService.Status -ne 'Running'){
+                Start-Service -WarningAction SilentlyContinue $ServiceName
+            }
+            Start-Sleep -seconds 30
+            if ($arrService.Status -ne 'Running'){
+                Start-Service -WarningAction SilentlyContinue $ServiceName
+            }
+        }
+    }
 
     #Write-Host "Maintenance from $min to $max`n"
     LogWrite $LogFile "Maintenance from $min to $max"
@@ -266,8 +288,8 @@ try{
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUBqPhJZDc/Do8Mo/p9GjsXaib
-# SAagggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUqQJbGVxdjUYiTdZIvVM6Hfvi
+# 8PWgggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -307,11 +329,11 @@ try{
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBQfDUU/D7aVdgvVKU03KrcMUY8r4jANBgkqhkiG9w0BAQEFAASCAQCD
-# qDIWXou+7uheKhWwHblqtXGhx8iiNoNLqY2xR/FGrQYkVtBBUeqqqTVmLf9bptiY
-# HUKxQgMD9c0ODaH7POLdIXjBLPNWXFSzuVRlIkJwIXj+aM86/cARS9N/siVuwbxP
-# z2QqLlQ8KUXChAkrYSIIU/EcfEzO/RAC7Nqyblu1JhiHLtHIpIkZ2mys04Q81xwg
-# Xf17O7PecD7pIdZERuXk8M60OrzLbO6ECefND9ur0BMX0Sqg/x17+5lw6Lo+JXuj
-# +JQGdQ7nYn8Lc3CzwwsVTxuaCv7lt1vyt2jJRif9QtRPBa0gLELZluRs/2mZqZf0
-# GC8jicU+HKK2xGfdgXWW
+# DQEJBDEWBBT0p1AIuNEgqJn1pTx61shvIgi7VzANBgkqhkiG9w0BAQEFAASCAQA1
+# cswjhXWrhIaWu9Xebp05JtqaIyoWiicennto0zcR10nVgggbmrw0vmyE5iGcnGmG
+# pfSZw8AYloaCnkdIHhUE5o4MNxhXNq/RjRU7uNip57/XCHJilJ4uNrFGv/ikH17g
+# sEtro/tk0ozTh/EB/qYP8DzRx8gKfK1NNjLu0rWxXKbcLVw/pfpLwYYhD6RwO4GI
+# SrKfiKciA/db3Lv88kEkgoLwH4XzNdI+IYOY9NoYYeQrf1sQU5gaarnxMIbVY4ke
+# OE7ooKzxc2S9EF69UkSGSTAyW+Bz8u3qMd/iOc9zdi+sikdUrO4SKmYUI++eK+5C
+# NVNCMI6pcAhHcR1FuLax
 # SIG # End signature block

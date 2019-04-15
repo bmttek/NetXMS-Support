@@ -1,68 +1,52 @@
 ﻿. "$PSScriptRoot\common.ps1"
 
-$LogFile = $logDirectory + "uwfEnableDisable.log"
+$LogFile = $logDirectory + "NetXMSAgentDatabaseFix.log"
 $uwfExe = "$($env:SystemDrive)\Windows\system32\uwfmgr.exe"
 $configFile = $configDirectory + "uwfMaintenence.ini"
+$systemFile = $configDirectory + "systemSettings.ini"
 $COMPUTER = "localhost"
 $NAMESPACE = "root\standardcimv2\embedded"
 $rtn = ""
+$addLogs = $true
+$addConfig = $true
+$addWinNetXMS = $true
+$addFog = $true
+$autoMaintenance = $false
+$reboot = $false
+$adminOverride = $false
+$ServiceName = 'NetXMSAgentdW32'
 
 try{
-    if($args.Length -gt 0){
-        $iniFile = Get-IniFile $configFile
-        if($($args[0]).ToString().ToLower() -like "enable"){
-            try{
-                $iniFile.Global.adminOverride = ""
-                $command="$uwfExe filter enable"
-                $output = iex $command
-                Out-IniFile $iniFile $configFile
-                Write-Host "UWF Filter Enabled and removed admin override`r"
-                $command = "shutdown -r -t 5"
-                $output = iex $command
-            } catch {
-                if(Test-Path $configFile){
-                    Remove-Item $configFile
-                }
-                Add-Content $configFile -Value "[Global]"
-                Add-Content $configFile -Value "adminOverride="
-                Add-Content $configFile -Value "[Working]"
-                Add-Content $configFile -Value "autoMaint="
-            }
-        } elseif ($($args[0]).ToString().ToLower() -like "disable"){
-            try {
-                $iniFile.Global.adminOverride = "true"
-                $command="$uwfExe filter disable"
-                $output = iex $command
-                Out-IniFile $iniFile $configFile
-                Write-Host "UWF Filter Disabled and set admin override`r"
-                $command = "shutdown -r -t 5"
-                $output = iex $command
-            } catch {
-                if(Test-Path $configFile){
-                    Remove-Item $configFile
-                }
-                Add-Content $configFile -Value "[Global]"
-                Add-Content $configFile -Value "adminOverride=true"
-                Add-Content $configFile -Value "[Working]"
-                Add-Content $configFile -Value "autoMaint="
-            }
-        } else {
-            Write-Host "Invalid argument given: $($args[0])`r"
-        }
-    } else {
-        Write-Host "No arguments given`r"
+    $arrService = Get-Service -Name $ServiceName
+    if ($arrService.Status -eq 'Running'){
+        Stop-Service -WarningAction SilentlyContinue $ServiceName
+        Start-Sleep -seconds 20
+    }
+    if(Test-Path "$($env:SystemDrive)\Windows\System32\config\systemprofile\AppData\Local\nxagentd\nxagentd.db"){
+        Remove-Item("$($env:SystemDrive)\Windows\System32\config\systemprofile\AppData\Local\nxagentd\nxagentd.db")
+        Start-Sleep -seconds 3
+    }
+    Start-Service -WarningAction SilentlyContinue $ServiceName
+    Start-Sleep -seconds 30
+    if ($arrService.Status -ne 'Running'){
+        Start-Service -WarningAction SilentlyContinue $ServiceName
+    }
+    Start-Sleep -seconds 30
+    if ($arrService.Status -ne 'Running'){
+        Start-Service -WarningAction SilentlyContinue $ServiceName
     }
 } catch {
     $line = $_.InvocationInfo.ScriptLineNumber
     LogWrite $LogFile "Error $_ processing ini file at line $line"
-    Write-Host "Error processing script Enable/Disable - Error $_ in line $line`r"
+    Write-Host "NetXMSAgentDatabaseFix=$logDateTime - Error $_ in line $line `r"
 }
+
 
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQURjS3buy8X/D3NrShQXty6SHV
-# ILigggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUwHS+G8P5wnugCboD4FEXmTTz
+# CjWgggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -102,11 +86,11 @@ try{
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBRWqvnpG5cYe8zFluQ24qUSoOuWJTANBgkqhkiG9w0BAQEFAASCAQCj
-# U9I8R70qJT692voLgDgXA9NWS8wfe0PjCGtu5pHKUhstH+mcGGBZTz0iD/b56oa2
-# P3a8fzWOlfyJJ89jqJoRHT5CQUouDkf7jtpt0XCngeHNPEBsKUkhgR3LN9aQuqYa
-# 0m26MpKCzTd5oeJtSZCcyJ+vnJgFn+1QL4//iDbkdEPqmH9SeBhRpL91ZooKmcmf
-# ROhg/QSYiGUKyJmGo/4AtysxBCQVN/fn2Ys6mf65l4F25T9cvemguPdQwpCYLSZ1
-# lW8SGFKckZ0Ftq7OjV8aCOMu9Mmz4q/FWHO1Ust+ffSi1kFA1/EHoIbd6zjsnzNq
-# gs+gbCxvQpuOuPPLnNUp
+# DQEJBDEWBBS6LKO5f3kpsv3muxmYiPtv3RXtqTANBgkqhkiG9w0BAQEFAASCAQAM
+# RWfHj7wus98qq7LcdkCbJV5GNer9c6Sl3tUR/PA013qxgPwjrIT/1nPpypOY+y7i
+# QF9onEzNb9FQZsvJyumOVWC6tbL81NKYg8WLet8PWQ5eKudb9YJnjxd3Dv9uuFNo
+# 2SC3V6M2Xt/PPwpUeCyDBsHTePzJUxQfIbNZ/9KPnMs0X12aWktHSdCkHkyKt6YW
+# UUzqG4wgGsjBBJOk3SV+NX1FVpKDB3QHsnmSrVJJkSmF0OvG5TQzjmLju60kpHnu
+# 9DHX0jW+pZjFn14VeAHXvtJ1WYD8QdFnDSty0WLduatyFOdn6uREH9vRq3oOUM07
+# D6n+cwKssFoh8DovUvHH
 # SIG # End signature block
