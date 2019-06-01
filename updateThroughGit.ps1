@@ -14,14 +14,15 @@ try{
                     $command="$gitPath"
                     [Array]$arguments = "pull"
                     $output = & $command $arguments
-                     Write-Host "Yes"
+                    Write-Host "Agent.UpdateScripts.Status=OK`r"
+                    Write-Host "Agent.UpdateScripts.LogDetails=Ppdated script from git`r`n"
                 } else {
-                    
+                    Remove-Item -Recurse -Path $scriptLocation
                     $command="$gitPath"
                     [Array]$arguments = "clone","$($iniFile.GIT.URL)","$scriptLocation"
-                    $output = & $command $arguments 
-                     Write-Host "No"
-                    Write-Host $output
+                    & $command $arguments
+                    Write-Host "Agent.UpdateScripts.Status=OK`r"
+                    Write-Host "Agent.UpdateScripts.LogDetails=Recreated script from git`r`n"
                 }
             } else {
                 Write-Host "Agent.UpdateScripts.Status=Error-Git not found on this computer`r"
