@@ -3,13 +3,30 @@
 $LogFile = $logDirectory + "updateScript.log"
 $configFile = $configDirectory + "systemSettings.ini"
 $runUpdate = $false
+$gitUpdate = $false
+$windowsTempDir = "$($env:SystemDrive)\Windows\temp\"
 try{
     Write-Host "Agent.UpdateScripts.LastReported=$logDateTime`r"
     try{
         if(Test-Path $configFile){
             $iniFile = Get-IniFile $configFile
-            $sourcePath = "\\$($iniFile.Global.Domain)\sysvol\$($iniFile.Global.Domain)\scripts\NetXMS\"
-            $runUpdate = $true
+            if($($iniFile.GIT.URL).Length -gt 3){
+                if(Test-Path "$($windowsTempDir)\common.ps1"){
+                    Remove-Item "$($windowsTempDir)\common.ps1"
+                }
+                if(Test-Path "$($windowsTempDir)\updateThroughGit.ps1"){
+                    Remove-Item "$($windowsTempDir)\updateThroughGit.ps1"
+                }
+                Copy-Item "$($PSScriptRoot)\common.ps1" "$($windowsTempDir)\common.ps1"
+                Copy-Item "$($PSScriptRoot)\updateThroughGit.ps1" "$($windowsTempDir)\updateThroughGit.ps1"
+                 $command="$($env:SystemDrive)\Windows\System32\start.exe"
+                 [Array]$arguments = "-File","$($windowsTempDir)updateThroughGit.ps1"
+                 Start-Process -FilePath "powershell.exe" -WorkingDirectory $windowsTempDir -ArgumentList $arguments -WindowStyle Hidden
+                 $gitUpdate = $true
+            } else {
+                $sourcePath = "\\$($iniFile.Global.Domain)\sysvol\$($iniFile.Global.Domain)\scripts\NetXMS\"
+                $runUpdate = $true
+            }
         } else {
             if($args.Length -ge 1){
                 $runUpdate = $true
@@ -55,9 +72,10 @@ try{
         Write-Host "Agent.UpdateScripts.LogDetails=""`r"
     }
     else{
-        LogWrite $LogFile "No argument for location given"
-        Write-Host "Agent.UpdateScripts.Status=No Source path argument or domain set in system settings"
-
+        if($gitUpdate -eq $false){
+            LogWrite $LogFile "No argument for location given"
+            Write-Host "Agent.UpdateScripts.Status=No Source path argument or domain set in system settings"
+        }
     }
 } catch {
     $line = $_.InvocationInfo.ScriptLineNumber
@@ -69,8 +87,8 @@ try{
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUOukc2yIQIVw7rpcH+I4bs2nx
-# OXigggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUXpVjxsuFe87Yrf3RvzLYEnZ/
+# N12gggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -110,11 +128,11 @@ try{
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBRnO1TLc2LkTYglNPRFvlJt2cYjqTANBgkqhkiG9w0BAQEFAASCAQAa
-# dlt40twsK946M1uAJW2aWpBqSVY2zboQNyoeAoNZl1HjkFgIxgw+FmCVeSbYkZSU
-# V7cPpGojk8lN99VMsTIRXwLexNUXDhvv4wNbVF0KOsgNTdBrh6KSsIdAlusGbJgR
-# LgFWBbroX/sPR6GfwqYEy7Msqq0FlRLCTAM69IwzbaS/RegvHBVNAIUP63FlQ0C8
-# gZcpWIBZeYrzM/d3BtDV5C32G1D0cKg6C93sZf3CJil6OYGZW68d4kHrCGrURQHK
-# W0na4pZfvrBy40GEXZPYYB/0Lww0A8dICfhaUBTs+kAliw2WetqVftztIwpIZ1cb
-# CjtFAOQV96hDplegDIWe
+# DQEJBDEWBBRtWBuqq4+Lvwi7I36JWI6IZgoDtTANBgkqhkiG9w0BAQEFAASCAQA0
+# R6HkH4HEYXty22DUIYoDCysTLWWfGapp3E5plL4UlGUpb0S4I40PYTtR6sUZi0ZD
+# 0HhKPlBgLitSF7BCBFOg2SKLDd/JBICWsxjSxm6rNnc6aLEL/jE0xoMUrbTukus6
+# /Klg9+TYU5Pct7f8WxMvl9hZ1O0YZHByrG1s3KTUu8Bgwc+iuin4UV4xYz/qlpez
+# RRnFUugHTUbgL7l8A5W9lfFiEBNRQo3l2wHWJ0gDntGpSkfM7tW/bQhWgypSFZ1b
+# 5Q4Oh8AdO1h8voHhMnPmzj90BG1zZ/pGhhusilXR/Jc1P0fDUd952BY2m//stlco
+# uZKiPur8TVsj60ZDSwf8
 # SIG # End signature block
