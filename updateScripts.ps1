@@ -5,24 +5,49 @@ $configFile = $configDirectory + "systemSettings.ini"
 $runUpdate = $false
 $gitUpdate = $false
 $windowsTempDir = "$($env:SystemDrive)\Windows\temp\"
+$scriptLocation = "$($env:ProgramData)\NetXMS\script"
+$logDetails = ""
+$logStatus = ""
 try{
     Write-Host "Agent.UpdateScripts.LastReported=$logDateTime`r"
     try{
         if(Test-Path $configFile){
             $iniFile = Get-IniFile $configFile
             if($($iniFile.GIT.URL).Length -gt 3){
-                if(Test-Path "$($windowsTempDir)\common.ps1"){
-                    Remove-Item "$($windowsTempDir)\common.ps1"
+                try{
+                    if(Test-Path $configFile){
+                        LogWrite $LogFile "Started update git script YAYAY"
+                        $iniFile = Get-IniFile $configFile
+                        $gitPath = "$($env:Programfiles)\Git\bin\git.exe"
+                        if(Test-Path $gitPath){
+                            $gitUpdate=$true
+                            if(Test-Path "$($scriptLocation)\.git"){
+                                Set-Location $scriptLocation
+                                $command="$gitPath"
+                                [Array]$arguments = "pull"
+                                $output = & $command $arguments
+                                $logDetails = "$logDetails Update through git with result -- $output" 
+                                $logStatus = "OK"
+                            } else {
+                                Remove-Item -Recurse -Path $scriptLocation
+                                $command="$gitPath"
+                                [Array]$arguments = "clone","$($iniFile.GIT.URL)","$scriptLocation"
+                                $output = & $command $arguments
+                                $logDetails = "$logDetails Update through git with result -- $output" 
+                                $logStatus = "OK"
+                            }
+                        } else {
+                            $logDetails = "$logDetails Update through git Git not found on this computer" 
+                            $logStatus = "Error"
+                        }
+
+                    }
+                } catch {
+                    $line = $_.InvocationInfo.ScriptLineNumber
+                    $logDetails = "$logDetails Update through git Error $_ in line $line" 
+                    $logStatus = "Error"
+                    LogWrite $LogFile "Error $_ processing ini file at line $line"
                 }
-                if(Test-Path "$($windowsTempDir)\updateThroughGit.ps1"){
-                    Remove-Item "$($windowsTempDir)\updateThroughGit.ps1"
-                }
-                Copy-Item "$($PSScriptRoot)\common.ps1" "$($windowsTempDir)\common.ps1"
-                Copy-Item "$($PSScriptRoot)\updateThroughGit.ps1" "$($windowsTempDir)\updateThroughGit.ps1"
-                 $command="$($env:SystemDrive)\Windows\System32\start.exe"
-                 [Array]$arguments = "-File","$($windowsTempDir)updateThroughGit.ps1"
-                 Start-Process -FilePath "powershell.exe" -WorkingDirectory $windowsTempDir -ArgumentList $arguments -WindowStyle Hidden
-                 $gitUpdate = $true
             } else {
                 $sourcePath = "\\$($iniFile.Global.Domain)\sysvol\$($iniFile.Global.Domain)\scripts\NetXMS\"
                 $runUpdate = $true
@@ -68,27 +93,29 @@ try{
                 }
             } 
         }
-        Write-Host "Agent.UpdateScripts.Status=OK`r"
-        Write-Host "Agent.UpdateScripts.LogDetails=""`r"
+        $logStatus = "OK"
     }
     else{
         if($gitUpdate -eq $false){
+            $logDetails = "$logDetails No Source path argument or domain set in system settings" 
+            $logStatus = "Error"
             LogWrite $LogFile "No argument for location given"
-            Write-Host "Agent.UpdateScripts.Status=No Source path argument or domain set in system settings"
         }
     }
 } catch {
     $line = $_.InvocationInfo.ScriptLineNumber
     LogWrite $LogFile "Error $_ processing ini file at line $line"
-    Write-Host "Agent.UpdateScripts.Status=Error`r"
-    Write-Host "Agent.UpdateScripts.LogDetails=Error $_ in line $line `r`n"
+    $logDetails = "$logDetails Update through git Error $_ in line $line" 
+    $logStatus = "Error"
 } 
+Write-Host "Agent.UpdateScripts.Status=$logStatus`r"
+Write-Host "Agent.UpdateScripts.LogDetails=$logDetails`r`n"
 
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUxYxyWCg5VZ4rHS9ABwzF4u0i
-# 16mgggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUPwEofGyIxjOUjqO+15Geuvef
+# s0+gggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -128,11 +155,11 @@ try{
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBSxPzpoEnbhX6kNMVDubbllwRepTTANBgkqhkiG9w0BAQEFAASCAQBx
-# c7zT5vKLjA266o/69UEtMiwj8W4lwGz29qJvOQ2pfShWanfPgpBPxTGPsqA7qnXF
-# QQx4+jQzbVn4fnmKzpb508mJHjbma0DYZxDTSTeagKiiwt3twLqVqM8tznxdyfF8
-# 1kAPAg8eaf0iOmrCvvjUsPVVecz05ceX9wzpA9GTAINpaUEaA+05wjVDW/aY/hLC
-# C7PXy+S7/sHPNuhfoj+VQIgTaHNce5h4SOgpyYsNxNrcYMa2/3gguMH83wtzSQGj
-# L7eVvVJH7FrlUQWxV/W0MFGYTwub5u/h9yAV3ktvd6wP18FrxVyi+PqDlGCUmFb6
-# QVGmMzK9iL8E/Fpj2QCQ
+# DQEJBDEWBBQHsKuL76CkrwdhbCFrfemJKfk5cTANBgkqhkiG9w0BAQEFAASCAQA6
+# 35GdB3cUxk+fof/xLX32QQGt/ZMR244H+dQk2d9O26tDg385FNEkr1QUnesP5Kp9
+# FE9vaZI9zjSXc0s9A461geuAM62jPnzkEmdimZeQCZ6Uac84D1ojKM+e/PaPYeum
+# 4NGWVdB1puTC8jjLtu4YChv1NRncs9dxuwNgde0di46iB5GFXjgFME2ALEEkDpgP
+# Azg4A0TJRx10Vy0xuQngcSTB/wmZqgZG5TADxb4ZrX8kOhD4F3+EIm+Dbo5EUaY/
+# ZL7Iw0XVkcRiecO0+0Wg52GDeRceQnHSuBv3Usi/Pegghcpq88TAj8/bLbSC4g9F
+# VcfWbgIfo1ZjUduh9+bE
 # SIG # End signature block
