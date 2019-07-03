@@ -25,16 +25,24 @@ try{
                                 Set-Location $scriptLocation
                                 $command="$gitPath"
                                 [Array]$arguments = "pull"
-                                $output = & $command $arguments
+                                $output = [string] (& $command $arguments 2>&1)
                                 $logDetails = "$logDetails Update through git with result -- $output" 
-                                $logStatus = "OK"
+                                if($output -Match "error"){
+                                    $logStatus = "Error"
+                                } else {
+                                    $logStatus = "OK"
+                                }
                             } else {
                                 Remove-Item -Recurse -Path $scriptLocation
                                 $command="$gitPath"
                                 [Array]$arguments = "clone","$($iniFile.GIT.URL)","$scriptLocation"
-                                $output = & $command $arguments
+                                $output =  [string] (& $command $arguments 2>&1)
                                 $logDetails = "$logDetails Update through git with result -- $output" 
-                                $logStatus = "OK"
+                                if($output -Match "error"){
+                                    $logStatus = "Error"
+                                } else {
+                                    $logStatus = "OK"
+                                }
                             }
                         } else {
                             $logDetails = "$logDetails Update through git Git not found on this computer" 
@@ -114,8 +122,8 @@ Write-Host "Agent.UpdateScripts.LogDetails=$logDetails`r`n"
 # SIG # Begin signature block
 # MIIJOwYJKoZIhvcNAQcCoIIJLDCCCSgCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUPwEofGyIxjOUjqO+15Geuvef
-# s0+gggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUyTWjxk4EEnOqk14BgVttZ3DH
+# YF2gggavMIIGqzCCBJOgAwIBAgITOAAACB+sNs/+AcABNwAAAAAIHzANBgkqhkiG
 # 9w0BAQsFADA+MRMwEQYKCZImiZPyLGQBGRYDb3JnMRQwEgYKCZImiZPyLGQBGRYE
 # b2xwbDERMA8GA1UEAxMIb2xwbC0tQ0EwHhcNMTgxMTE4MTEzNTAzWhcNMTkxMTE4
 # MTEzNTAzWjCBpTETMBEGCgmSJomT8ixkARkWA29yZzEUMBIGCgmSJomT8ixkARkW
@@ -155,11 +163,11 @@ Write-Host "Agent.UpdateScripts.LogDetails=$logDetails`r`n"
 # ETAPBgNVBAMTCG9scGwtLUNBAhM4AAAIH6w2z/4BwAE3AAAAAAgfMAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBQHsKuL76CkrwdhbCFrfemJKfk5cTANBgkqhkiG9w0BAQEFAASCAQA6
-# 35GdB3cUxk+fof/xLX32QQGt/ZMR244H+dQk2d9O26tDg385FNEkr1QUnesP5Kp9
-# FE9vaZI9zjSXc0s9A461geuAM62jPnzkEmdimZeQCZ6Uac84D1ojKM+e/PaPYeum
-# 4NGWVdB1puTC8jjLtu4YChv1NRncs9dxuwNgde0di46iB5GFXjgFME2ALEEkDpgP
-# Azg4A0TJRx10Vy0xuQngcSTB/wmZqgZG5TADxb4ZrX8kOhD4F3+EIm+Dbo5EUaY/
-# ZL7Iw0XVkcRiecO0+0Wg52GDeRceQnHSuBv3Usi/Pegghcpq88TAj8/bLbSC4g9F
-# VcfWbgIfo1ZjUduh9+bE
+# DQEJBDEWBBSL/gaOFHzJNs4jip6L8dZKZcv7qDANBgkqhkiG9w0BAQEFAASCAQAY
+# WcGR9QwFXIICC/Zp78uWqQfUHghmWnbTCM9ltw9ox9ciCDXgMoxjku9lnepvx9FJ
+# hjBYUnWrx50eZAWoMjh6GMFaRASv7VyKsNJX9at37tAmuNg+sLstQhNfGdC7WVW/
+# 9zAuBJE3KuxhQunykFHgTYLq4DzxfCwCaPyYALiUOcUnMyXagLrSujEtt06Fa5E5
+# jfvyQLl+473c1fHQjGB7EGdZXxb666utsUVwv4vqAdb0FdcV2+VCkqIJuELKiw1M
+# rwN3lM4tXiuuuIKN05x9W/UrpTIJMDOj+n63yaNXnaslMHJ9zGtLUkM9JxQlDqhw
+# UoY97/9k8wn2Nw1XaD6O
 # SIG # End signature block
