@@ -21,11 +21,11 @@ try{
                         $gitPath = "$($env:Programfiles)\Git\bin\git.exe"
                         if(Test-Path $gitPath){
                             $gitUpdate=$true
-                            if( (Get-ChildItem C:\temp | Measure-Object).Count -lt 2)
+                            if( (Get-ChildItem "$($scriptLocation)\.git" | Measure-Object).Count -gt 1)
                             {
                                 Set-Location $scriptLocation
                                 $command="$gitPath"
-                                [Array]$arguments = "pull"
+                                [Array]$arguments = "pull","orgin","master"
                                 $output = [string] (& $command $arguments 2>&1)
                                 $logDetails = "$logDetails Update through git with result -- $output" 
                                 if($output -Match "error"){
@@ -34,9 +34,17 @@ try{
                                     $logStatus = "OK"
                                 }  
                             } else {
-                                Remove-Item -Recurse -Path $scriptLocation
+                                Set-Location -Path $scriptLocation
                                 $command="$gitPath"
-                                [Array]$arguments = "clone","$($iniFile.GIT.URL)","$scriptLocation"
+                                [Array]$arguments = "init"
+                                $output =  [string] (& $command $arguments 2>&1)
+                                [Array]$arguments = "remote","add","orgin","$($iniFile.GIT.URL)"
+                                $output =  [string] (& $command $arguments 2>&1)
+                                [Array]$arguments = "reset","--hard","HEAD"
+                                $output =  [string] (& $command $arguments 2>&1)
+                                [Array]$arguments = "clean","-f","-d"
+                                $output =  [string] (& $command $arguments 2>&1)
+                                [Array]$arguments = "pull","orgin","master"
                                 $output =  [string] (& $command $arguments 2>&1)
                                 $logDetails = "$logDetails Clone through git with result -- $output" 
                                 if($output -Match "error"){
